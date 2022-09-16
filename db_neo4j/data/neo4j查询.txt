@@ -1,0 +1,51 @@
+三元组总数：59280
+企业节点：5452
+竞争关系：1171
+供应关系：4362
+各个属性节点
+	企业名称：5452
+	地址节点：5452
+	企业标签：5452
+	经营范围：5452
+	网站节点：5452
+	新闻动态节点：26487
+	
+
+查询与该企业有关联的节点
+match (e:Enterprise{name:"东方电气（广州）重型机器有限公司"})
+return e
+
+查询企业节点数量——5452
+match (:Enterprise)
+return count(*)
+
+查询新闻事件节点数量——26487
+match (:N_news)
+return count(*)
+
+查询有多少条供应关系——4362
+match ()-[:Supply]->()
+return count(*)
+
+查询有多少条竞争关系——1171
+match ()-[:Compete]->()
+return count(*)
+
+查询东方重机的直接供应商有哪些
+match (e:Enterprise)-[s:Supply]->(p:Enterprise{name:"东方电气（广州）重型机器有限公司"})
+return e,p,s
+有多少家直接供应商
+match (e:Enterprise)-[s:Supply]->(p:Enterprise{name:"东方电气（广州）重型机器有限公司"})
+return count(e)
+
+查询东方重机的客户有哪些
+match (p:Enterprise{name:"东方电气（广州）重型机器有限公司"})-[s:Supply]->(e:Enterprise)
+return e,p,s
+
+查询东方重机的竞争企业有哪些
+match (e:Enterprise)<-[s:Compete]-(p:Enterprise{name:"东方电气（广州）重型机器有限公司"})
+return e,p,s
+
+查询东方重机的近期新闻事件
+match (p:Enterprise{name:"东方电气（广州）重型机器有限公司"})-[n:Dynamic_News]->(s:N_news)
+return n,p,s

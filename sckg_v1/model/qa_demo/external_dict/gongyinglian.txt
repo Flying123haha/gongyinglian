@@ -1,0 +1,15 @@
+经营范围 comattr
+广州友田机电设备有限公司 company
+地址 comattr
+标签 comattr
+竞争关系 compete
+合作关系 cooperation
+供应商关系 provide
+湖南汉华京电清洁能源科技有限公司 company
+深圳市艾特软件有限公司 company
+普元信息技术股份有限公司 company
+建筑业 industry
+电力 industry
+相关 relation
+公司 entity
+

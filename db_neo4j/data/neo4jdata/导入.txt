@@ -1,0 +1,130 @@
+// 导入allEnterprises 
+load csv with headers from "file:///neo4jdata/allE.csv" as line
+create (:Enterprise{
+	uid:line.id,
+	name:line.name,
+	flag:line.flag,
+	website:line.website,
+	address:line.address,
+	p_tag:line.p_tag,
+	i_tag:line.i_tag,
+	tongYiSheHuiXinYongDaiMa:line.tongyishehuixinyongdaima,
+	faRen:line.faren,
+	status:line.status,
+	chengLiShiJian:line.chenglishijian,
+	zhuCeZiBen:line.zhuceziben,
+	shiJiaoZiBen:line.shijiaoziben,
+	zuZhiJiGouDaiMa:line.zuzhijigoudaima,
+	gongShangZhuCeHao:line.gongshangzhucehao,
+	naShuiRenShiBieHao:line.nashuirenshibiehao,
+	qiYeLeiXing:line.qiyeleixing,
+	yingYeQiXian:line.yingyeqixian,
+	naShuiRenZiZhi:line.nashuirenzizhi,
+	suoShuHangYe:line.suoshuhangye,
+	suoShuDiQu:line.suoshudiqu,
+	dengJiJiGuan:line.dengjijiguan,
+	renYuanGuiMo:line.renyuanguimo,
+	canBaoRenShu:line.canbaorenshu,
+	cengYongMing:line.cengyongming,
+	zhuCeDiZhi:line.zhucedizhi,
+	business_scope:line.jingyingfanwei
+	})
+
+// 创建索引
+create CONSTRAINT ON (e:Enterprise)
+assert e.uid is unique
+
+create CONSTRAINT ON (e:Enterprise)
+assert e.name is unique
+
+// 导入专利
+load csv with headers from "file:///neo4jdata/zhuanli.csv" as line
+create (:ZhuanLi{
+	uid:line.zhuanliId,
+	suoShuQiYe:line.enterpriseId,
+	zhuanLiName:line.zhuanliName,
+	shenQingHao:line.applicationNumber,
+	zhuanLiLeiXing:line.zhuanliType,
+	status:line.status,
+	shenQingDate:line.applicationDate,
+	zhuanLiZhaiYao:line.abstractInfo
+	})
+	
+	
+// 创建索引
+create CONSTRAINT ON (z:ZhuanLi)
+assert z.uid is unique
+
+
+// 创建企业-专利关系
+load csv with headers from "file:///neo4jdata/zhuanli.csv" as line
+match (e1:Enterprise{uid:line.enterpriseId}),(e2:ZhuanLi{uid:line.zhuanliId})
+create (e1)-[:patent{enterpriseId:line.enterpriseId,zhuanliId:line.zhuanliId,type:'专利'}]->(e2)
+
+// 创建供应关系
+load csv with headers from "file:///neo4jdata/R_gongying.csv" as line
+match (e1:Enterprise{uid:line.enterpriseId}),(e2:Enterprise{uid:line.gongyingshangId})
+create (e2)-[:Supply{supply_product:'-', type:'供应'}]->(e1)
+
+// 创建标准节点
+load csv with headers from "file:///neo4jdata/biaozhun.csv" as line
+create (:Biaozhun{
+	standard_num:line.standard_num,
+	level:line.level,
+	standard_name:line.standard_name,
+	drafts_name:line.drafts_name,
+	publish_date:line.publish_date,
+	status:line.status
+	})
+	
+// 创建标准索引
+create CONSTRAINT ON (z:Biaozhun)
+assert z.standard_num is unique
+
+// 创建企业-标准关系
+load csv with headers from "file:///neo4jdata/biaozhun-enterprise.csv" as line
+match (e1:Enterprise{name:line.enterprise_name}),(e2:Biaozhun{standard_num:line.standard_num})
+create (e1)-[:standard{enterprise_name:line.enterprise_name,standard_num:line.standard_num, type:'标准'}]->(e2)
+
+// 创建企业合作关系 双向关系，但是这个关系太多了，到时查询时再做双向查询
+// type表示合作类型为共同撰写标准，cooperate_work_id表示合作的工作的id，这里为标准id
+load csv with headers from "file:///neo4jdata/hezuo2.csv" as line
+match (e1:Enterprise{name:line.enterprise1_name}),(e2:Enterprise{name:line.enterprise2_name})
+create (e1)-[:cooperation{enterprise1_name:line.enterprise1_name,
+	enterprise2_name:line.enterprise2_name,
+	cooperate_work_id:line.standard_num, type:'合作'}]->(e2)
+
+// 创建投资关系（股东）
+load csv with headers from "file:///neo4jdata/gudong.csv" as line
+match (e1:Enterprise{uid:line.gudongId}),(e2:Enterprise{uid:line.enterpriseId})
+create (e1)-[:invest{enterprise_name:line.enterpriseName,gudong_name:line.gudongName, type:'投资'}]->(e2)
+
+
+// 添加供应东方重机的产品
+load csv with headers from "file:///neo4jdata/in.csv" as line
+match (e1:Enterprise{name:line.enterprise}),(e2:Enterprise{name:'东方电气(广州)重型机器有限公司'})
+merge (e1)-[r:Supply{type:'供应'}]->(e2)
+set r.supply_product=line.product
+
+load csv with headers from "file:///neo4jdata/noin.csv" as line
+merge (e:Enterprise{name:line.enterprise})
+
+
+load csv with headers from "file:///neo4jdata/noin.csv" as line
+match (e1:Enterprise{name:line.enterprise}),(e2:Enterprise{name:'东方电气(广州)重型机器有限公司'})
+merge (e1)-[r:Supply{type:'供应'}]->(e2)
+set r.supply_product=line.product
+
+//添加新闻
+load csv with headers from "file:///neo4jdata/news.csv" as line
+create (:News{
+    newsTitle: line.title,
+    time : line.time,
+    link : original_link,
+    e_id : line.e_id,
+    enterpriseName : line.enterprise
+})
+
+load csv with headers from "file:///neo4jdata/news.csv" as line
+match (e1:Enterprise{uid:line.e_id}),(e2:News{newsTitle:line.title, time:line.time})
+create (e1)-[:newsRel{time:line.time,newsTitle:line.title,type:'新闻'}]->(e2)

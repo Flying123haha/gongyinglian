@@ -1,0 +1,79 @@
+创建企业节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+create (:Enterprise{name:line.name,status:line.status,website:line.website,address:line.address,p_tag:line.p_tag,i_tag:line.i_tag,
+business_scope:line.business_scope})
+# 新企业节点
+load csv with headers from "file:///newGraph/企业信息.csv" as line
+create (:Enterprise{eprid:line.id,name:line.企业名,tag:line.标签, idCode:line.统一社会信用代码, represent:line.法定代表人,status:line.登记状态, createdate:line.成立日期,
+register:line.注册资本,shijiao:line.实缴资本, orgcode:line.组织机构代码,gongshang:line.工商注册号, nashuiren:line.纳税人识别号 ,entype:line.企业类型 ,
+duration:line.营业期限, qualification:line.纳税人资质, industry:line.所属行业, area:line.所属地区, jiguan:line.登记机关, total_amount:line.人员规模, insurance_amout:line.参保人数,
+oldname:line.曾用名, register_address:line.注册地址, range:line.经营范围, website:line.网址})
+
+
+创建属性_状态节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+match (e:Enterprise{name:line.name})
+create (e)-[:Status{type:'经营状态'}]->(:N_status{type:line.status})
+# 新企业节点：专利
+load csv with headers from "file:///newGraph/专利.csv" as line
+match (e:Enterprise{eprid:line.企业id})
+create (e)-[:patents{type:'专利'}]->(:N_patents{patentName:line.专利名, applicationId:line.申请号, type:line.类型, status:line.status,applicationDate:line.申请日期})
+# 新企业节点：标准
+load csv with headers from "file:///newGraph/标准.csv" as line
+match (e:Enterprise{eprid:line.企业id})
+create (e)-[:standards{type:'标准'}]->(:N_standards{standardId:line.标准号, standardName:line.标准名称, standardLevel:line.标准级别, department:line.起草单位,publishDate:line.发布日期,status:line.状态})
+# 新企业节点：软著
+load csv with headers from "file:///newGraph/软著.csv" as line
+match (e:Enterprise{eprid:line.企业id})
+create (e)-[:softRight{type:'软著'}]->(:N_softRight{copyrightName:line.软著名, registerId:line.登记号, registerDate:line.登记日期})
+
+创建属性_官网节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+match (e:Enterprise{name:line.name})
+create (e)-[:Website{type:'官方网站'}]->(:N_website{type:line.website})
+
+
+创建属性_地址节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+match (e:Enterprise{name:line.name})
+create (e)-[:Address{type:'地址'}]->(:N_address{type:line.address})
+
+创建属性_企业标签节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+match (e:Enterprise{name:line.name})
+create (e)-[:Business_label{type:'企业标签'}]->(:N_business_label{type_i_pag:line.i_tag,type_p_tag:line.p_tag})
+
+创建属性_经营范围节点
+load csv with headers from "file:///企业信息_1114.csv" as line
+match (e:Enterprise{name:line.name})
+create (e)-[:Business_scope{type:'经营范围'}]->(:N_business_scope{type:line.business_scope})
+
+创建竞争关系
+load csv with headers from "file:///竞争关系_1114.csv" as line
+match (e1:Enterprise{name:line.企业}),(e2:Enterprise{name:line.竞争企业})
+create (e1)-[:Compete{type:'竞争'}]->(e2)
+# 创建竞争关系
+load csv with headers from "file:///newGraph/竞争关系.csv" as line
+match (e1:Enterprise{name:line.竞争1}),(e2:Enterprise{name:line.竞争2})
+create (e1)-[:Compete{type:'竞争'}]->(e2)
+
+
+创建供应关系
+load csv with headers from "file:///供应关系_1114.csv" as line
+match (e1:Enterprise{name:line.供应商}),(e2:Enterprise{name:line.客户})
+create (e1)-[:Supply{type:'供应'}]->(e2)
+# 创建供应关系
+load csv with headers from "file:///newGraph/供应关系.csv" as line
+match (e1:Enterprise{eprid:line.供应商id}),(e2:Enterprise{eprid:line.被供应商id})
+create (e1)-[:Supply{type:'供应',product:line.供应产品}]->(e2)
+
+match (e:Enterprise{name:"东方电气（广州）重型机器有限公司"})-[:Website]-(w),(e)-[:Address]-(a),(e)-[:Status]-(s),(e)-[:Business_label]-(l),(e)-[:Business_scope]-(sc),(e)-[:Compete]-(co),(e)-[:Supply]-(su),(e)-[:Supply]->(k) return e,w,a,s,l,sc,co,su,k limit 30
+
+
+load csv with headers from "file:///news_1114.csv" as line
+match (e:Enterprise{name:line.enterprise})
+create (e)-[:Dynamic_News{type:'新闻动态'}]->(:N_news{title:line.title,time:line.time,link:line.link})
+# 创建新闻
+load csv with headers from "file:///newGraph/企业新闻动态.csv" as line
+match (e:Enterprise{eprid:line.企业id})
+create (e)-[:Dynamic_News{type:'新闻动态'}]->(:N_news{title:line.标题,abstract:line.摘要,link:line.链接})
