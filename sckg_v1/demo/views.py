@@ -30,7 +30,6 @@ def search_entity(request):
         e1Re2 = db.findRelationByEntity(entity)
         e2Re1 = db.findRelationByEntity2(entity)
         e1News = db.findNewsByEntity(entity)
-
         # if len(e1Re2) == 0 and len(e2Re1) == 0:
         if len(case) == 0:
             # 若数据库中无法找到该实体，则返回数据库中无该实体
@@ -42,9 +41,9 @@ def search_entity(request):
             news_list = []
             e1Re2_list = []
             e2Re1_list = []
-            print(e1News)
+            # print(e1News)
             for d in e1Re2:
-                print(d)
+                # print(d)
                 if (d['relation']['supply_product']):
                     e1Re2_list.append(d)
                 # if (d['relation']['type'] in ['新闻动态']):
@@ -57,12 +56,23 @@ def search_entity(request):
                 # if (d['relation']['type'] in ['新闻动态']):
                 #     news_list.append(d)
             for d in e1News:
-                pass
+                # print(d['n'])
+                # print(type(d['n']))
+                news_list.append(d)
+            # 将新闻链接变成可点击的,加标签
+            print(news_list)
+            for i in range(len(news_list)):
+                # print(i)
+                # print(news_list[i]['n']['link'])
+                link = news_list[i]['n']['link']
+                # print(link)
+                link = "<a href=" + str(link) + ">"+str(link)+" </a>"
+                news_list[i]['n']['link'] = link
 
             ctx['e1Re2'] = json.dumps(e1Re2_list, ensure_ascii=False)
             ctx['e2Re1'] = json.dumps(e2Re1_list, ensure_ascii=False)
-            if (len(news_list) > 0):
-                ctx['entityNews'] = json.dumps(news_list, ensure_ascii=False)
+            ctx['entityNews'] = json.dumps(news_list, ensure_ascii=False)
+            print(ctx['entityNews'])
             return render(request, 'demo/entity.html', ctx)
 
     return render(request, "demo/entity.html", {'ctx': ctx})
@@ -233,6 +243,11 @@ def show_overview(request):
 
 
 #     # return HttpResponse("kkkkf")
+def englishCastChinese(cname, ename, answer, ctx):
+    if answer[ename] is not None:
+        ctx[cname] = answer[ename]
+        ctx.pop(ename)
+
 
 def getNodeCard(name):
     db = neo_con
@@ -247,25 +262,26 @@ def getNodeCard(name):
         ctx['title'] = '实体条目出现未知错误'
         return ctx
     print("answer is : " + answer['name'])
-
     # 获得企业的各种标签：i_tag p_tag business_scope website name等
     attributeDict = {"企业名称": 'name'}
 
     for item in answer.items():
         key = answer[item[0]]
         ctx[item[0]] = answer[item[0]]
-    # ctx['企业名称'] = answer['name']
-    # ctx['经营状态'] = answer['status']
-    # ctx['地址'] = answer['address']
-    # ctx['官方网站'] = answer['website']
-    # ctx['经营范围'] = answer['business_scope']
-    # ctx['detail'] = '企业简介'  #
-    # ctx['i_tag'] = answer['i_tag']
-    # ctx['p_tag'] = answer['p_tag']
+    name_dict = {'企业名称': 'name', '经营状态': 'status', '地址': 'address', '官方网站': 'website', '经营范围': 'business_scope',
+                 '企业简介': 'detail', '标签': 'i_tag', '所属行业': 'suoShuHangYe', '营业期限': 'yingYeQiXian', '所属地区': 'suoShuDiQu',
+                 '登记机关': 'dengJiJiGuan', '统一社会信用代码': 'tongYiSheHuiXinYongDaiMa', '企业类型': 'qiYeLeiXing',
+                 '纳税人资质': 'naShuiRenZiZhi', '参保人数': 'canBaoRenShu', '法人': 'faRen', '组织机构代码': 'zuZhiJiGouDaiMa',
+                 '成立时间': 'chengLiShiJian', '工商注册号': 'gongShangZhuCeHao', '曾用名': 'cengYongMing', '注册资本': 'zhuCeZiBen',
+                 '注册地址': 'zhuCeDiZhi', '人员规模': 'renYuanGuiMo', '纳税人别号': 'naShuiRenShiBieHao', '实缴资本': 'shiJiaoZiBen',
+                 '产品标签': 'p_tag'}
+    for cname, ename in name_dict.items():
+        englishCastChinese(cname, ename, answer, ctx)
+    # 删除uid
+    ctx.pop("uid")
     image = answer['image']
 
-    ctx['image'] = '<img src="' + str(image) + '" alt="该条目无图片" height="100%" width="100%" >'
-
+    ctx['图片'] = '<img src="' + str(image) + '" alt="该条目无图片" height="100%" width="100%" >'
     text = ""  # 存的是baseInfoTable
     list = []
     if (answer['i_tag'] is not None):
@@ -274,7 +290,7 @@ def getNodeCard(name):
         list += answer['p_tag'].split(',')
     for p in list:
         text += '<span class="badge bg-important">' + str(p) + '</span> '
-    ctx['openTypeList'] = text  # 标签
+    ctx['标签'] = text  # 标签
 
     text = '<table class="table table-striped table-advance table-hover"> <tbody>'  # 卡片标签
     i = 0
@@ -310,7 +326,7 @@ def getNodeCard(name):
 def filter_rel(res):
     ans = []
     for d in res:
-        if (d['relation']['type']) in ['供应', '投资','合作','专利']:
+        if (d['relation']['type']) in ['供应', '投资', '合作', '专利']:
             ans.append(d)
     return ans
 
